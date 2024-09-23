@@ -2,6 +2,12 @@
 
 HOME_DIR=$(pwd)
 
+if [ -x "$HOME_DIR"/essentials.sh ]; then
+    "$HOME_DIR"/essentials.sh
+else
+    echo "Skipping $HOME_DIR/essentials.sh, not executable."
+fi
+
 for script in "$HOME_DIR"/packages/*.sh; do
     if [ -x "$script" ]; then
         "$script"
