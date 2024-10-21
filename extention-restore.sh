@@ -10,17 +10,42 @@ fi
 
 # Restore user-installed extensions
 if [ -d "$backup_dir/user_extensions" ]; then
-    cp -r "$backup_dir/user_extensions"/* "$HOME/.local/share/gnome-shell/extensions/"
+    for ext in "$backup_dir/user_extensions"/*; do
+        ext_name=$(basename "$ext")
+        cp -r "$ext" "$HOME/.local/share/gnome-shell/extensions/"
+        if [ -f "$backup_dir/user_extensions/$ext_name.conf" ]; then
+            dconf load /org/gnome/shell/extensions/"$ext_name"/ < "$backup_dir/user_extensions/$ext_name.conf"
+        fi
+    done
 fi
 
 # Restore system-wide extensions (requires sudo)
 if [ -d "$backup_dir/system_extensions" ]; then
-    sudo cp -r "$backup_dir/system_extensions"/* /usr/share/gnome-shell/extensions/
+    for ext in "$backup_dir/system_extensions"/*; do
+        ext_name=$(basename "$ext")
+        sudo cp -r "$ext" /usr/share/gnome-shell/extensions/
+        if [ -f "$backup_dir/system_extensions/$ext_name.conf" ]; then
+            sudo dconf load /org/gnome/shell/extensions/"$ext_name"/ < "$backup_dir/system_extensions/$ext_name.conf"
+        fi
+    done
 fi
 
-# Restore dconf settings
-if [ -f "$backup_dir/gnome_extensions_settings.conf" ]; then
-    dconf load /org/gnome/shell/extensions/ < "$backup_dir/gnome_extensions_settings.conf"
+# Restore the list of user-installed extensions
+if [ -f "$backup_dir/user_extensions_list.txt" ]; then
+    cat "$backup_dir/user_extensions_list.txt" | while read ext_name; do
+        if [ -d "$backup_dir/user_extensions/$ext_name" ]; then
+            cp -r "$backup_dir/user_extensions/$ext_name" "$HOME/.local/share/gnome-shell/extensions/"
+        fi
+    done
+fi
+
+# Restore the list of system-wide extensions
+if [ -f "$backup_dir/system_extensions_list.txt" ]; then
+    cat "$backup_dir/system_extensions_list.txt" | while read ext_name; do
+        if [ -d "$backup_dir/system_extensions/$ext_name" ]; then
+            sudo cp -r "$backup_dir/system_extensions/$ext_name" /usr/share/gnome-shell/extensions/
+        fi
+    done
 fi
 
 echo "Restore completed successfully!"
